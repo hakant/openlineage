@@ -1,0 +1,17 @@
+version: 2
+
+# `dbt seed` loads the CSVs into public.raw_orders / public.raw_customers. They are declared as
+# sources so that dbt-ol reports them as input datasets (dbt-ol ignores `ref()`-ed seeds, so a
+# model that selects from a seed would show up in Marquez without any upstream dataset).
+#
+# The dataset names (warehouse.public.raw_orders, ...) are the same ones used by the hand-written
+# events in stage 1, so the graphs of both stages connect in Marquez.
+sources:
+  - name: shop_raw
+    database: warehouse
+    schema: public
+    tables:
+      - name: raw_orders
+        description: Orders as exported from the shop backend (loaded with dbt seed).
+      - name: raw_customers
+        description: Customers as exported from the shop backend (loaded with dbt seed).

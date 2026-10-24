@@ -1,0 +1,15 @@
+# OpenLineage client config, picked up from the current working directory
+# (or from the path in $OPENLINEAGE_CONFIG). Run scripts from the repo root.
+#
+# To inspect events without Marquez, swap the transport, e.g.:
+#   transport:
+#     type: console
+# or
+#   transport:
+#     type: file
+#     log_file_path: events.jsonl
+#     append: true
+transport:
+  type: http
+  url: http://localhost:9000
+  endpoint: api/v1/lineage

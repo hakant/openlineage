@@ -1,0 +1,116 @@
+{
+  "eventType": "COMPLETE",
+  "eventTime": "__NOW__",
+  "producer": "https://github.com/example/openlineage-marquez-poc",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent",
+  "run": {
+    "runId": "__RUN_STG__",
+    "facets": {
+      "parent": {
+        "_producer": "https://github.com/example/openlineage-marquez-poc",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/ParentRunFacet.json#/$defs/ParentRunFacet",
+        "run": { "runId": "__RUN_PARENT__" },
+        "job": { "namespace": "poc_raw_events", "name": "daily_pipeline" }
+      }
+    }
+  },
+  "job": {
+    "namespace": "poc_raw_events",
+    "name": "build_stg_orders",
+    "facets": {
+      "sql": {
+        "_producer": "https://github.com/example/openlineage-marquez-poc",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-0-1/SQLJobFacet.json#/$defs/SQLJobFacet",
+        "query": "CREATE OR REPLACE TABLE stg_orders AS SELECT order_id, customer_id, order_ts, CAST(order_ts AS DATE) AS order_date, amount_cents / 100.0 AS amount, status FROM raw_orders WHERE status <> 'cancelled'"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "namespace": "postgres://localhost:5433",
+      "name": "warehouse.public.raw_orders",
+      "facets": {
+        "schema": {
+          "_producer": "https://github.com/example/openlineage-marquez-poc",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json#/$defs/SchemaDatasetFacet",
+          "fields": [
+            { "name": "order_id", "type": "bigint" },
+            { "name": "customer_id", "type": "bigint" },
+            { "name": "order_ts", "type": "timestamp without time zone" },
+            { "name": "amount_cents", "type": "bigint" },
+            { "name": "status", "type": "text" }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "namespace": "postgres://localhost:5433",
+      "name": "warehouse.public.stg_orders",
+      "facets": {
+        "documentation": {
+          "_producer": "https://github.com/example/openlineage-marquez-poc",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-0-0/DocumentationDatasetFacet.json#/$defs/DocumentationDatasetFacet",
+          "description": "Cleaned orders: typed columns, amounts in currency units, cancelled orders removed."
+        },
+        "schema": {
+          "_producer": "https://github.com/example/openlineage-marquez-poc",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json#/$defs/SchemaDatasetFacet",
+          "fields": [
+            { "name": "order_id", "type": "bigint" },
+            { "name": "customer_id", "type": "bigint" },
+            { "name": "order_ts", "type": "timestamp without time zone" },
+            { "name": "order_date", "type": "date" },
+            { "name": "amount", "type": "numeric" },
+            { "name": "status", "type": "text" }
+          ]
+        },
+        "columnLineage": {
+          "_producer": "https://github.com/example/openlineage-marquez-poc",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json#/$defs/ColumnLineageDatasetFacet",
+          "fields": {
+            "order_id": {
+              "inputFields": [
+                { "namespace": "postgres://localhost:5433", "name": "warehouse.public.raw_orders", "field": "order_id" }
+              ]
+            },
+            "customer_id": {
+              "inputFields": [
+                { "namespace": "postgres://localhost:5433", "name": "warehouse.public.raw_orders", "field": "customer_id" }
+              ]
+            },
+            "order_ts": {
+              "inputFields": [
+                { "namespace": "postgres://localhost:5433", "name": "warehouse.public.raw_orders", "field": "order_ts" }
+              ]
+            },
+            "status": {
+              "inputFields": [
+                { "namespace": "postgres://localhost:5433", "name": "warehouse.public.raw_orders", "field": "status" }
+              ]
+            },
+            "order_date": {
+              "inputFields": [
+                { "namespace": "postgres://localhost:5433", "name": "warehouse.public.raw_orders", "field": "order_ts" }
+              ]
+            },
+            "amount": {
+              "inputFields": [
+                { "namespace": "postgres://localhost:5433", "name": "warehouse.public.raw_orders", "field": "amount_cents" }
+              ]
+            }
+          }
+        }
+      },
+      "outputFacets": {
+        "outputStatistics": {
+          "_producer": "https://github.com/example/openlineage-marquez-poc",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/OutputStatisticsOutputDatasetFacet.json#/$defs/OutputStatisticsOutputDatasetFacet",
+          "rowCount": 9870,
+          "size": 412345
+        }
+      }
+    }
+  ]
+}

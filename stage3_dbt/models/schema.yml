@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: Orders without cancelled ones, typed and in currency units.
+    columns:
+      - name: order_id
+        data_tests: [not_null, unique]
+      - name: customer_id
+        data_tests: [not_null]
+  - name: stg_customers
+    description: Customers with normalised e-mail addresses (contains PII).
+    columns:
+      - name: customer_id
+        data_tests: [not_null, unique]
+  - name: fct_daily_revenue
+    description: Revenue, order count and average order value per day (completed orders only).
+    columns:
+      - name: order_date
+        data_tests: [not_null, unique]
+  - name: dim_customer_ltv
+    description: Lifetime orders and value per customer.
+    columns:
+      - name: customer_id
+        data_tests: [not_null, unique]

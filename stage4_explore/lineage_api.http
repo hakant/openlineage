@@ -1,0 +1,107 @@
+### Marquez REST API playground.
+### Works with the VS Code / Cursor "REST Client" extension (click "Send Request" above a request)
+### or the JetBrains HTTP client. Each request is also a plain `curl` call.
+### API docs: https://marquezproject.github.io/marquez/openapi.html
+###
+### Note: namespaces and dataset names contain ':' and '/' and must be URL-encoded in paths
+###   postgres://localhost:5433  ->  postgres%3A%2F%2Flocalhost%3A5433
+###   data/raw/orders.csv        ->  data%2Fraw%2Forders.csv
+### nodeId query parameters may be left unencoded.
+
+@api = http://localhost:9000/api/v1
+@pg = postgres%3A%2F%2Flocalhost%3A5433
+@files = file%3A%2F%2Fopenlineage-poc
+
+### ---------------------------------------------------------------- basics
+### Namespaces (one per producer/data source/job group)
+GET {{api}}/namespaces
+
+###
+### Jobs in a namespace
+GET {{api}}/namespaces/poc_python_pipeline/jobs
+
+###
+### Datasets in a namespace
+GET {{api}}/namespaces/{{pg}}/datasets
+
+###
+### One dataset, including its facets and fields
+GET {{api}}/namespaces/{{pg}}/datasets/warehouse.public.fct_daily_revenue
+
+### ---------------------------------------------------------------- runs and versions
+### Run history of a job (state, duration, run facets such as errorMessage / parent)
+GET {{api}}/namespaces/poc_python_pipeline/jobs/daily_pipeline.clean_orders/runs
+
+###
+### Dataset versions: one per run that wrote the dataset - compare "fields" to spot schema changes
+GET {{api}}/namespaces/{{files}}/datasets/data%2Fraw%2Forders.csv/versions
+
+###
+### Job versions (a new version is created when the job's inputs/outputs/SQL change)
+GET {{api}}/namespaces/poc_raw_events/jobs/ingest_orders/versions
+
+### ---------------------------------------------------------------- lineage graph
+### Dataset-level lineage around a dataset (depth = hops in both directions)
+GET {{api}}/lineage?nodeId=dataset:postgres://localhost:5433:warehouse.public.fct_daily_revenue&depth=5
+
+###
+### Same, starting from a job
+GET {{api}}/lineage?nodeId=job:poc_python_pipeline:daily_pipeline.clean_orders&depth=3
+
+###
+### Column-level lineage: where does "revenue" come from? (upstream is the default)
+GET {{api}}/column-lineage?nodeId=datasetField:file://openlineage-poc:data/marts/daily_revenue.csv:revenue&depth=5
+
+###
+### Column-level lineage downstream of a column (impact analysis).
+### Quirk: for a column of a dataset that no job has produced with column lineage (e.g. a raw source), Marquez
+### returns an empty graph here - start from a derived column such as stg_orders.amount, or merge the
+### upstream graphs of all datasets locally (see explore.ipynb).
+GET {{api}}/column-lineage?nodeId=datasetField:postgres://localhost:5433:warehouse.public.stg_orders:amount&depth=5&withDownstream=true
+
+###
+### Column lineage for a whole dataset
+GET {{api}}/column-lineage?nodeId=dataset:postgres://localhost:5433:warehouse.public.stg_orders&depth=2
+
+### ---------------------------------------------------------------- search and raw events
+### Full-text search over jobs and datasets
+GET {{api}}/search?q=orders&limit=10
+
+###
+### Raw events as stored (the same payloads you sent), newest first
+GET {{api}}/events/lineage?limit=5
+
+###
+### Raw events within a time window
+GET {{api}}/events/lineage?limit=5&after=2026-10-01T00:00:00Z&sortDirection=desc
+
+### ---------------------------------------------------------------- metadata you can add
+### Create a tag ...
+PUT {{api}}/tags/PII
+Content-Type: application/json
+
+{ "description": "Personally identifiable information" }
+
+###
+### ... tag a dataset ...
+POST {{api}}/namespaces/{{pg}}/datasets/warehouse.public.stg_customers/tags/PII
+
+###
+### ... or a single column (visible in the UI on the dataset page)
+POST {{api}}/namespaces/{{pg}}/datasets/warehouse.public.stg_customers/fields/email/tags/PII
+
+###
+### Send an event yourself (same endpoint the clients use)
+POST {{api}}/lineage
+Content-Type: application/json
+
+{
+  "eventType": "COMPLETE",
+  "eventTime": "2026-10-24T12:00:00.000Z",
+  "producer": "https://example.com/manual",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent",
+  "run": { "runId": "11111111-2222-3333-4444-555555555555" },
+  "job": { "namespace": "manual", "name": "hello_lineage" },
+  "inputs": [{ "namespace": "manual", "name": "in_table" }],
+  "outputs": [{ "namespace": "manual", "name": "out_table" }]
+}

@@ -1,0 +1,25 @@
+{
+  "eventType": "START",
+  "eventTime": "__NOW__",
+  "producer": "https://github.com/example/openlineage-marquez-poc",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent",
+  "run": {
+    "runId": "__RUN_INGEST__"
+  },
+  "job": {
+    "namespace": "poc_raw_events",
+    "name": "ingest_orders"
+  },
+  "inputs": [
+    {
+      "namespace": "file://localhost",
+      "name": "/data/raw_orders.csv"
+    }
+  ],
+  "outputs": [
+    {
+      "namespace": "postgres://localhost:5433",
+      "name": "warehouse.public.raw_orders"
+    }
+  ]
+}

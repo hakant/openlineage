@@ -1,0 +1,21 @@
+[project]
+name = "openlineage-marquez-poc"
+version = "0.1.0"
+description = "Learning POC for OpenLineage events and Marquez"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "openlineage-python",
+    "openlineage-dbt",
+    "dbt-postgres",
+    "pandas",
+    "requests",
+    "networkx",
+    "psycopg2-binary",
+    "jupyter",
+    "ipykernel",
+    "matplotlib",
+]
+
+[tool.uv]
+package = false

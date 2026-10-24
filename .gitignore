@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+
+# generated data / outputs
+stage2_python_pipeline/data/
+events.jsonl
+stage3_dbt/target/
+stage3_dbt/logs/
+stage3_dbt/dbt_packages/

@@ -1,0 +1,39 @@
+{
+  "eventType": "COMPLETE",
+  "eventTime": "__NOW__",
+  "producer": "https://github.com/example/openlineage-marquez-poc",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent",
+  "run": {
+    "runId": "__RUN_INGEST2__"
+  },
+  "job": {
+    "namespace": "poc_raw_events",
+    "name": "ingest_orders"
+  },
+  "inputs": [
+    {
+      "namespace": "file://localhost",
+      "name": "/data/raw_orders.csv"
+    }
+  ],
+  "outputs": [
+    {
+      "namespace": "postgres://localhost:5433",
+      "name": "warehouse.public.raw_orders",
+      "facets": {
+        "schema": {
+          "_producer": "https://github.com/example/openlineage-marquez-poc",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json#/$defs/SchemaDatasetFacet",
+          "fields": [
+            { "name": "order_id", "type": "bigint" },
+            { "name": "customer_id", "type": "bigint" },
+            { "name": "order_ts", "type": "timestamp without time zone" },
+            { "name": "amount_cents", "type": "bigint" },
+            { "name": "status", "type": "text" },
+            { "name": "coupon_code", "type": "text" }
+          ]
+        }
+      }
+    }
+  ]
+}

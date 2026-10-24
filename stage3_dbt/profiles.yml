@@ -1,0 +1,14 @@
+# Points at the "warehouse" Postgres from docker-compose.yml (host port 5433).
+# Use with:  dbt-ol run --profiles-dir .
+shop:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      port: 5433
+      user: warehouse
+      password: warehouse
+      dbname: warehouse
+      schema: public
+      threads: 2

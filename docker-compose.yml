@@ -1,0 +1,81 @@
+# Marquez stack + a separate "warehouse" Postgres used by the dbt stage.
+#
+# Host ports (5000 is avoided on purpose: macOS AirPlay Receiver uses it):
+#   3000  Marquez Web UI
+#   9000  Marquez API        (container port 5000)
+#   9001  Marquez admin API  (container port 5001)
+#   5432  Marquez Postgres   (so you can run SQL against it in stage 4)
+#   5433  Warehouse Postgres (dbt target)
+name: openlineage-poc
+
+services:
+  marquez-db:
+    image: postgres:14
+    container_name: marquez-db
+    environment:
+      POSTGRES_USER: marquez
+      POSTGRES_PASSWORD: marquez
+      POSTGRES_DB: marquez
+    ports:
+      - "5432:5432"
+    volumes:
+      - marquez-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marquez -d marquez"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  marquez-api:
+    image: marquezproject/marquez:latest
+    platform: linux/amd64  # image is amd64-only; runs under emulation on Apple Silicon
+    container_name: marquez-api
+    depends_on:
+      marquez-db:
+        condition: service_healthy
+    environment:
+      MARQUEZ_CONFIG: /usr/src/app/marquez.yml
+      POSTGRES_HOST: marquez-db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: marquez
+      POSTGRES_USER: marquez
+      POSTGRES_PASSWORD: marquez
+    ports:
+      - "9000:5000"
+      - "9001:5001"
+    volumes:
+      - ./marquez/marquez.yml:/usr/src/app/marquez.yml:ro
+
+  marquez-web:
+    image: marquezproject/marquez-web:latest
+    platform: linux/amd64
+    container_name: marquez-web
+    depends_on:
+      - marquez-api
+    environment:
+      MARQUEZ_HOST: marquez-api
+      MARQUEZ_PORT: "5000"
+      WEB_PORT: "3000"
+    ports:
+      - "3000:3000"
+
+  warehouse:
+    image: postgres:14
+    container_name: warehouse-db
+    environment:
+      POSTGRES_USER: warehouse
+      POSTGRES_PASSWORD: warehouse
+      POSTGRES_DB: warehouse
+    ports:
+      - "5433:5432"
+    volumes:
+      - warehouse-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warehouse -d warehouse"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  marquez-db-data:
+  warehouse-data:

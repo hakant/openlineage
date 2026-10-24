@@ -1,0 +1,40 @@
+{
+  "eventType": "START",
+  "eventTime": "__NOW__",
+  "producer": "https://github.com/example/openlineage-marquez-poc",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent",
+  "run": {
+    "runId": "__RUN_REVENUE__",
+    "facets": {
+      "parent": {
+        "_producer": "https://github.com/example/openlineage-marquez-poc",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/ParentRunFacet.json#/$defs/ParentRunFacet",
+        "run": { "runId": "__RUN_PARENT__" },
+        "job": { "namespace": "poc_raw_events", "name": "daily_pipeline" }
+      }
+    }
+  },
+  "job": {
+    "namespace": "poc_raw_events",
+    "name": "build_daily_revenue",
+    "facets": {
+      "sql": {
+        "_producer": "https://github.com/example/openlineage-marquez-poc",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-0-1/SQLJobFacet.json#/$defs/SQLJobFacet",
+        "query": "CREATE OR REPLACE TABLE fct_daily_revenue AS SELECT order_date, SUM(amount) AS revenue, COUNT(order_id) AS orders, AVG(amount) AS avg_order_value FROM stg_orders WHERE status = 'completed' GROUP BY order_date"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "namespace": "postgres://localhost:5433",
+      "name": "warehouse.public.stg_orders"
+    }
+  ],
+  "outputs": [
+    {
+      "namespace": "postgres://localhost:5433",
+      "name": "warehouse.public.fct_daily_revenue"
+    }
+  ]
+}

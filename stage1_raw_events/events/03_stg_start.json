@@ -1,0 +1,53 @@
+{
+  "eventType": "START",
+  "eventTime": "__NOW__",
+  "producer": "https://github.com/example/openlineage-marquez-poc",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent",
+  "run": {
+    "runId": "__RUN_STG__",
+    "facets": {
+      "parent": {
+        "_producer": "https://github.com/example/openlineage-marquez-poc",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/ParentRunFacet.json#/$defs/ParentRunFacet",
+        "run": { "runId": "__RUN_PARENT__" },
+        "job": { "namespace": "poc_raw_events", "name": "daily_pipeline" }
+      }
+    }
+  },
+  "job": {
+    "namespace": "poc_raw_events",
+    "name": "build_stg_orders",
+    "facets": {
+      "sql": {
+        "_producer": "https://github.com/example/openlineage-marquez-poc",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-0-1/SQLJobFacet.json#/$defs/SQLJobFacet",
+        "query": "CREATE OR REPLACE TABLE stg_orders AS SELECT order_id, customer_id, order_ts, CAST(order_ts AS DATE) AS order_date, amount_cents / 100.0 AS amount, status FROM raw_orders WHERE status <> 'cancelled'"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "namespace": "postgres://localhost:5433",
+      "name": "warehouse.public.raw_orders",
+      "facets": {
+        "schema": {
+          "_producer": "https://github.com/example/openlineage-marquez-poc",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json#/$defs/SchemaDatasetFacet",
+          "fields": [
+            { "name": "order_id", "type": "bigint" },
+            { "name": "customer_id", "type": "bigint" },
+            { "name": "order_ts", "type": "timestamp without time zone" },
+            { "name": "amount_cents", "type": "bigint" },
+            { "name": "status", "type": "text" }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "namespace": "postgres://localhost:5433",
+      "name": "warehouse.public.stg_orders"
+    }
+  ]
+}
