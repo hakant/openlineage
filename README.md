@@ -76,10 +76,12 @@ The files in `stage1_raw_events/events/` are plain OpenLineage `RunEvent`s (plac
 | Files | What is new |
 | --- | --- |
 | `01`, `02` | the bare minimum: `eventType`, `eventTime`, `run.runId`, `job`, `inputs`, `outputs`, `producer`, `schemaURL` |
-| `03`, `04` | `sql` job facet, `schema`, `documentation` and `columnLineage` dataset facets, `outputStatistics`, `parent` run facet |
-| `05`, `06` | a `FAIL` event with an `errorMessage` run facet |
-| `07` | schema change: a lone `COMPLETE` event (no `START`) with a new column |
-| `08`, `09`, `10`, `11` | a second run of the failed job (`START` + `COMPLETE`) and `COMPLETE`/`FAIL` events for the parent run |
+| `03` | the parent run `daily_pipeline` starts (its own `START` event, no datasets); the child runs below point to it |
+| `04`, `05` | `sql` job facet, `schema`, `documentation` and `columnLineage` dataset facets, `outputStatistics`, `parent` run facet |
+| `06`, `07` | a `FAIL` event with an `errorMessage` run facet |
+| `08` | the parent run ends with `FAIL` |
+| `09` | schema change: a lone `COMPLETE` event (no `START`) with a new column |
+| `10`-`13` | `--rerun`: a second parent run starts, `build_daily_revenue` runs again (`START` + `COMPLETE`), the parent completes |
 
 Look for in the UI (http://localhost:3000): the namespace switcher (top right), the job/dataset graph
 (click a dataset - lineage), run history of `build_daily_revenue` (FAILED, then COMPLETED after
@@ -90,10 +92,13 @@ Things worth noticing:
 
 * Events are independent. Marquez stitches them together by `runId`; a lone `COMPLETE` works but has no
   start time or duration.
-* **Parent runs rename jobs.** Because jobs `03`-`06`, `08`-`09` carry a `parent` facet, Marquez stores them as
+* **Parent runs rename jobs.** Because jobs `04`-`07`, `11`-`12` carry a `parent` facet, Marquez stores them as
   `daily_pipeline.build_stg_orders` etc. A job without the facet would be a different job.
-* Marquez creates a new dataset version for every event that lists an output. Events `01`/`03`/`05` list outputs
-  on `START` without a schema, which creates empty versions (stage 2 avoids this by only reporting outputs on `COMPLETE`/`FAIL`).
+* **Outputs on `START` are a trade-off.** The spec allows datasets on any event, and many integrations (for example
+  Spark and Airflow) report inputs and outputs on `START`, so events `01`, `04`, `06` and `11` do the same. The price in
+  Marquez: every event that lists an output creates a dataset version, so a `START` without a schema leaves an empty
+  version next to the real one from `COMPLETE`. Stage 2 takes the other route and reports outputs only on
+  `COMPLETE`/`FAIL`; compare the dataset versions of both stages to see the difference.
 
 ## Stage 2: Python pipeline
 

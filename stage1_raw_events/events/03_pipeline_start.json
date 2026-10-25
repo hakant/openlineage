@@ -1,0 +1,13 @@
+{
+  "eventType": "START",
+  "eventTime": "__NOW__",
+  "producer": "https://github.com/example/openlineage-marquez-poc",
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent",
+  "run": {
+    "runId": "__RUN_PARENT__"
+  },
+  "job": {
+    "namespace": "poc_raw_events",
+    "name": "daily_pipeline"
+  }
+}

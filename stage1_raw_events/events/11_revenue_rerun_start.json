@@ -36,5 +36,10 @@
       "name": "warehouse.public.stg_orders"
     }
   ],
-  "outputs": []
+  "outputs": [
+    {
+      "namespace": "postgres://localhost:5433",
+      "name": "warehouse.public.fct_daily_revenue"
+    }
+  ]
 }
